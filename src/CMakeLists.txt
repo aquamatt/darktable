@@ -131,6 +131,7 @@ FILE(GLOB SOURCE_FILES
   "develop/pixelpipe.c"
   "develop/tiling.c"
   "dtgtk/button.c"
+  "dtgtk/colorwheel.c"
   "dtgtk/culling.c"
   "dtgtk/drawingarea.c"
   "dtgtk/expander.c"
