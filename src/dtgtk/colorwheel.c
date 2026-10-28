@@ -267,8 +267,11 @@ static void _scrolled(GtkEventControllerScroll *controller,
   if(dy == 0.0) return;
 
   const float step = w->chroma_range / 50.0f;
-  const float chroma = CLAMPF(dt_bauhaus_slider_get(w->chroma) - dy * step,
-                              0.0f, w->chroma_range);
+  const float current = dt_bauhaus_slider_get(w->chroma);
+  /* the limit is the rim or the current chroma, whichever is larger: a value
+   * beyond the rim, typed or from a preset, stays put when scrolled outwards
+   * and comes down a step at a time when scrolled inwards */
+  const float chroma = CLAMPF(current - dy * step, 0.0f, MAX(w->chroma_range, current));
   dt_bauhaus_slider_set(w->chroma, chroma);
 }
 
