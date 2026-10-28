@@ -2258,8 +2258,15 @@ gboolean dt_masks_point_in_form_exact(const float x,
 
     int nb = 0;
 
+    // a valid walk visits each point at most once, so more than twice
+    // that many steps means the skip markers form a cycle: stop rather
+    // than loop forever
+    const int max_steps = 2 * points_count;
+    int steps = 0;
+
     for(int i = start, next = start + 1; i < points_count;)
     {
+      if(++steps > max_steps) break;
       const float y1 = points[i * 2 + 1];
       const float y2 = points[next * 2 + 1];
       //if we need to skip points (in case of deleted point, because
@@ -2278,6 +2285,10 @@ gboolean dt_masks_point_in_form_exact(const float x,
       i = next++;
       if(next >= points_count) next = start;
     }
+    if(steps > max_steps)
+      dt_print(DT_DEBUG_MASKS,
+               "[dt_masks_point_in_form_exact] skip markers form a cycle,"
+               " stopped after %d steps", max_steps);
     return (nb & 1) != 0;
   }
   return FALSE;
@@ -2306,8 +2317,16 @@ gboolean dt_masks_point_in_form_near(const float x,
       : points_start;
 
     int nb = 0;
+
+    // a valid walk visits each point at most once, so more than twice
+    // that many steps means the skip markers form a cycle: stop rather
+    // than loop forever
+    const int max_steps = 2 * points_count;
+    int steps = 0;
+
     for(int i = start, next = start + 1; i < points_count;)
     {
+      if(++steps > max_steps) break;
       const float x1 = points[i * 2];
       const float y1 = points[i * 2 + 1];
       const float y2 = points[next * 2 + 1];
@@ -2335,6 +2354,10 @@ gboolean dt_masks_point_in_form_near(const float x,
       if(next >= points_count)
         next = start;
     }
+    if(steps > max_steps)
+      dt_print(DT_DEBUG_MASKS,
+               "[dt_masks_point_in_form_near] skip markers form a cycle,"
+               " stopped after %d steps", max_steps);
     return (nb & 1) != 0;
   }
   return FALSE;
