@@ -21,6 +21,7 @@
 #include "bauhaus/bauhaus.h"
 #include "common/darktable.h"
 #include "common/math.h"
+#include "common/undo.h"
 #include "dtgtk/drawingarea.h"
 #include "gui/gtk.h"
 
@@ -40,11 +41,31 @@ typedef struct _colorwheel_t
   int disc_size;
 
   gboolean dragging;
+  /* an undo group is open for the drag in progress */
+  gboolean undo_group;
 } _colorwheel_t;
+
+/* moving the puck changes two sliders, which darktable records as separate
+ * undo steps; a drag is grouped so that it undoes in one */
+static void _start_undo_group(_colorwheel_t *w)
+{
+  if(w->undo_group) return;
+  dt_undo_start_group(darktable.undo, DT_UNDO_HISTORY);
+  w->undo_group = TRUE;
+}
+
+static void _end_undo_group(_colorwheel_t *w)
+{
+  if(!w->undo_group) return;
+  dt_undo_end_group(darktable.undo);
+  w->undo_group = FALSE;
+}
 
 static void _free(gpointer data)
 {
   _colorwheel_t *w = data;
+  /* a wheel destroyed mid-drag must not leave darktable's undo group open */
+  _end_undo_group(w);
   if(w->disc) cairo_surface_destroy(w->disc);
   g_free(w);
 }
@@ -212,6 +233,7 @@ static void _pressed(GtkGestureSingle *gesture,
     return;
   }
   w->dragging = TRUE;
+  _start_undo_group(w);
   _set_from_pointer(widget, x, y);
 }
 
@@ -221,7 +243,9 @@ static void _released(GtkGestureSingle *gesture,
                       const double y,
                       GtkWidget *widget)
 {
-  _get(widget)->dragging = FALSE;
+  _colorwheel_t *w = _get(widget);
+  w->dragging = FALSE;
+  _end_undo_group(w);
 }
 
 static void _motion(GtkEventControllerMotion *controller,
