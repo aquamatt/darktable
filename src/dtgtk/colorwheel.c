@@ -308,9 +308,10 @@ GtkWidget *dtgtk_color_wheel_new(GtkWidget *hue_slider,
                                 | GTK_EVENT_CONTROLLER_SCROLL_DISCRETE,
                         _scrolled, widget);
 
-  /* follow the sliders, so the puck is right however the value was changed */
-  g_signal_connect(hue_slider, "value-changed", G_CALLBACK(_slider_changed), widget);
-  g_signal_connect(chroma_slider, "value-changed", G_CALLBACK(_slider_changed), widget);
+  /* follow the sliders, so the puck is right however the value was changed;
+   * the handlers are tied to the wheel, which the sliders can outlive */
+  g_signal_connect_object(hue_slider, "value-changed", G_CALLBACK(_slider_changed), widget, 0);
+  g_signal_connect_object(chroma_slider, "value-changed", G_CALLBACK(_slider_changed), widget, 0);
 
   return widget;
 }
